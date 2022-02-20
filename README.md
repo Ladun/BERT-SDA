@@ -10,6 +10,7 @@ python run_classifier.py --model_type bert \
                          --max_seq_length 512 \
                          --logging_steps 4000 \
                          --save_steps 4000 \
+                         --evaluate_during_training \
                          --do_train
 ```
 
