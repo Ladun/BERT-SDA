@@ -268,12 +268,9 @@ def evaluate(args, model, tokenizer, mode, prefix=""):
 
 def load_and_cache_examples(args, tokenizer, mode='train', output_examples=False):
 
-    if not os.path.exists(args.dataset_name):
-        os.makedirs(args.dataset_name)
-
     # Load data features from cache or dataset file
     cached_features_file = os.path.join(
-        args.dataset_name,
+        args.output_dir,
         "cached_{}_{}_{}".format(
             mode,
             list(filter(None, args.model_name_or_path.split("/"))).pop(),
@@ -420,6 +417,10 @@ def main():
         logger.info('{}: {}'.format(k, v))
     logger.info('')
 
+    # Create output directory if needed
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(
@@ -445,9 +446,6 @@ def main():
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
     if args.do_train:
-        # Create output directory if needed
-        if not os.path.exists(args.output_dir) and args.local_rank in [-1, 0]:
-            os.makedirs(args.output_dir)
 
         logger.info("Saving model checkpoint to %s", args.output_dir)
         # Save a trained model, configuration and tokenizer using `save_pretrained()`.
