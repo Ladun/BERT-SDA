@@ -38,7 +38,7 @@ class CustomNLIProcessor(DataProcessor):
             guid = "%s-%s" % (set_type, i)
             text_a = line['premise']
             text_b = line['hypothesis']
-            label = str(line['label']) if set_type != 'test' else None
+            label = line['label'] if set_type != 'test' else None
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
