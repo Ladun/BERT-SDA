@@ -268,6 +268,9 @@ def evaluate(args, model, tokenizer, mode, prefix=""):
 
 def load_and_cache_examples(args, tokenizer, mode='train', output_examples=False):
 
+    if not os.path.exists(args.dataset_name):
+        os.makedirs(args.dataset_name)
+
     # Load data features from cache or dataset file
     cached_features_file = os.path.join(
         args.dataset_name,
