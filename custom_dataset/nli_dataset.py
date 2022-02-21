@@ -63,8 +63,8 @@ def nli_convert_examples_to_features(examples, tokenizer, max_seq_length, is_tra
 
         features.append(
             InputFeatures(input_ids=inputs['input_ids'],
-                          attention_mask=inputs['input_ids'],
-                          token_type_ids=inputs['input_ids'],
+                          attention_mask=inputs['attention_mask'],
+                          token_type_ids=inputs['token_type_ids'],
                           label=example.label))
 
     # Construct dataset
