@@ -34,13 +34,15 @@ class CustomNLIProcessor(DataProcessor):
     def _create_examples(self, dataset, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
+        labels = self.get_labels()
         for (i, line) in enumerate(dataset):
-            guid = "%s-%s" % (set_type, i)
-            text_a = line['premise']
-            text_b = line['hypothesis']
-            label = line['label'] if set_type != 'test' else None
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+            if line['label'] in labels:
+                guid = "%s-%s" % (set_type, i)
+                text_a = line['premise']
+                text_b = line['hypothesis']
+                label = line['label'] if set_type != 'test' else None
+                examples.append(
+                    InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
 
 
@@ -50,8 +52,6 @@ def nli_convert_examples_to_features(examples, tokenizer, max_seq_length, is_tra
     for idx, example in enumerate(examples):
         if idx % 10000 == 0:
             logger.info("Writing example %d" % (idx))
-
-        text = "[CLS] {} [SEP] {} [SEP]".format(example.text_a, example.text_b)
 
         inputs = tokenizer.encode_plus(
             example.text_a,
