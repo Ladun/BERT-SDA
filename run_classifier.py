@@ -5,10 +5,12 @@ import argparse
 import os
 import timeit
 import glob
+import copy
 
 import numpy as np
 
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from tqdm import tqdm, trange
 
@@ -101,7 +103,7 @@ def train(args, train_dataset, model, tokenizer):
 
     global_step = 1
     epochs_trained = 0
-    steps_trained_in_current_epoch  = 0
+    steps_trained_in_current_epoch = 0
 
     # Check if continuing training from a checkpoint
     if os.path.exists(args.model_name_or_path):
@@ -121,10 +123,19 @@ def train(args, train_dataset, model, tokenizer):
 
     tr_loss, logging_loss = 0.0, 0.0
     model.zero_grad()
+
+    # Create
+    if args.do_kd:
+        teaching_loss = nn.MSELoss()
+        teacher_model = copy.deepcopy(model)
+        teacher_model.to(args.device)
+        teacher_model.eval()
+
+        parameters = []
+
     train_iterator = trange(
         epochs_trained, int(args.num_train_epochs), desc="Epoch"
     )
-
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration")
         for step, batch in enumerate(epoch_iterator):
@@ -147,6 +158,14 @@ def train(args, train_dataset, model, tokenizer):
             # model outputs are always tuple in transformers (see doc)
             loss = outputs[0]
 
+            if args.do_kd:
+                if global_step > 1:
+                    inputs['labels'] = None
+                    with torch.no_grad():
+                        kd_logits = teacher_model(**inputs)[0]
+                    kd_loss = teaching_loss(outputs[1], kd_logits)
+                    loss += args.kd_lambda * kd_loss
+
             if args.n_gpu > 1:
                 loss = loss.mean()  # mean() to average on multi-gpu parallel (not distributed) training
             if args.gradient_accumulation_steps > 1:
@@ -156,6 +175,27 @@ def train(args, train_dataset, model, tokenizer):
 
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:
+                if args.do_kd:
+                    # Update teacher model
+                    with torch.no_grad():
+                        # Collect K steps parameters
+                        student_parameters = model.parameters()
+                        parameters.append(student_parameters)
+                        sub_parameters = None
+                        if len(parameters) > args.kd_K:
+                            sub_parameters = parameters.pop(0)
+
+                        decay = 1 / len(parameters)
+                        # Add recent parameters
+                        # Avg_N+1 = Avg_N + 1/N(a_N - Avg_N)
+                        for s_param, param in zip(teacher_model.parameters(), student_parameters):
+                            s_param.add_(decay * (param - s_param))
+
+                        # Delete the parameters before the K steps
+                        if sub_parameters is not None:
+                            for s_param, param in zip(teacher_model.parameters(), sub_parameters):
+                                s_param.sub_(decay * param)
+
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
                 optimizer.step()
@@ -203,6 +243,9 @@ def train(args, train_dataset, model, tokenizer):
             train_iterator.close()
             break
 
+        if 'cuda' in str(args.device):
+            torch.cuda.empty_cache()
+
     tb_writer.close()
 
     return global_step, tr_loss / global_step
@@ -213,6 +256,8 @@ def evaluate(args, model, tokenizer, mode, prefix=""):
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
+
+    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
 
     # Note that DistributedSampler samples randomly
     eval_sampler = SequentialSampler(dataset)
@@ -378,9 +423,7 @@ def main():
         action="store_true",
         help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number",
     )
-
     parser.add_argument("--seed", type=int, default=2022, help="random seed for initialization")
-
     parser.add_argument("--dataset_name", default=None, type=str, choices=['snli'], required=True)
     parser.add_argument("--overwrite_cache", action='store_true')
     parser.add_argument(
@@ -399,11 +442,19 @@ def main():
         "--evaluate_during_training", action="store_true", help="Run evaluation during training at each logging step."
     )
 
+    # Self-Distillation arguments
+    parser.add_argument("--distillation_type", default='none', type=str, choices=['none', 'average'])
+    parser.add_argument("--kd_lambda", default=1.0, type=float)
+    parser.add_argument("--kd_K", default=1, type=int,
+                        help="time step of student model, if kd_K is 0, see all models")
+
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = torch.cuda.device_count()
     args.device = device
+
+    args.do_kd = args.distillation_type != 'none'
 
     # Setup logging
     logging.basicConfig(
