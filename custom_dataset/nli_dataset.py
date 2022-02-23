@@ -19,12 +19,12 @@ class CustomNLIProcessor(DataProcessor):
 
     def get_dev_examples(self, dataset_name):
         """Gets a collection of :class:`InputExample` for the dev set."""
-        raise self._create_examples(
+        return self._create_examples(
             self._read_huggingface_datasets(dataset_name, data_type='validation'), "validation")
 
     def get_test_examples(self, dataset_name):
         """Gets a collection of :class:`InputExample` for the test set."""
-        raise self._create_examples(
+        return self._create_examples(
             self._read_huggingface_datasets(dataset_name, data_type='test'), "test")
 
     def get_labels(self):
