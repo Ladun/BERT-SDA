@@ -347,7 +347,7 @@ def load_and_cache_examples(args, tokenizer, mode='train', output_examples=False
             examples=examples,
             tokenizer=tokenizer,
             max_seq_length=args.max_seq_length,
-            is_training=mode == 'train'
+            is_training=mode != 'test'
         )
 
         logger.info("Saving features into cached file %s", cached_features_file)
