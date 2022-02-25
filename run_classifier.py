@@ -295,11 +295,11 @@ def evaluate(args, model, tokenizer, mode, prefix=""):
 
         nb_eval_steps += 1
         if preds is None:
-          preds = logits.detach().cpu().numpy()
-          out_label_ids = inputs["labels"].detach().cpu().numpy()
+            preds = logits.detach().cpu().numpy()
+            out_label_ids = inputs["labels"].detach().cpu().numpy()
         else:
-          preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
-          out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
+            preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+            out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
     eval_loss = eval_loss / nb_eval_steps
     preds = np.argmax(preds, axis=1)
@@ -317,8 +317,8 @@ def load_and_cache_examples(args, tokenizer, mode='train', output_examples=False
     cached_features_file = os.path.join(
         args.output_dir,
         "cached_{}_{}_{}".format(
+            args.dataset_name,
             mode,
-            list(filter(None, args.model_name_or_path.split("/"))).pop(),
             str(args.max_seq_length),
         ),
     )
