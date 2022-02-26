@@ -72,20 +72,13 @@ def nli_convert_examples_to_features(examples, tokenizer, max_seq_length, is_tra
     all_attention_masks = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
     all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
 
-    if is_training:
-        all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
-        dataset = TensorDataset(
-            all_input_ids,
-            all_attention_masks,
-            all_token_type_ids,
-            all_labels
-        )
-    else:
-        dataset = TensorDataset(
-            all_input_ids,
-            all_attention_masks,
-            all_token_type_ids
-        )
+    all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
+    dataset = TensorDataset(
+        all_input_ids,
+        all_attention_masks,
+        all_token_type_ids,
+        all_labels
+    )
 
     return features, dataset
 
