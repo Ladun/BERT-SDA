@@ -179,7 +179,7 @@ def train(args, train_dataset, model, tokenizer):
                     # Update teacher model
                     with torch.no_grad():
                         # Collect K steps parameters
-                        student_parameters = model.parameters()
+                        student_parameters = [p.clone.detach() for p in model.parameters()]
                         parameters.append(student_parameters)
                         sub_parameters = None
                         if len(parameters) > args.kd_K:
@@ -507,20 +507,21 @@ def main():
 
     if args.do_train:
 
-        logger.info("Saving model checkpoint to %s", args.output_dir)
+        output_dir = os.path.join(args.output_dir, "last")
+        logger.info("Saving model checkpoint to %s", output_dir)
         # Save a trained model, configuration and tokenizer using `save_pretrained()`.
         # They can then be reloaded using `from_pretrained()`
         # Take care of distributed/parallel training
         model_to_save = model.module if hasattr(model, "module") else model
-        model_to_save.save_pretrained(args.output_dir)
-        tokenizer.save_pretrained(args.output_dir)
+        model_to_save.save_pretrained(output_dir)
+        tokenizer.save_pretrained(output_dir)
 
         # Good practice: save your training arguments together with the trained model
-        torch.save(args, os.path.join(args.output_dir, "training_args.bin"))
+        torch.save(args, os.path.join(output_dir, "training_args.bin"))
 
         # Load a trained model and vocabulary that you have fine-tuned
-        model = model_class.from_pretrained(args.output_dir)  # , force_download=True)
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+        model = model_class.from_pretrained(output_dir)  # , force_download=True)
+        tokenizer = tokenizer_class.from_pretrained(output_dir, do_lower_case=args.do_lower_case)
         model.to(args.device)
 
     # Evaluation - we can ask to evaluate all the checkpoints (sub-directories) in a directory
