@@ -179,7 +179,7 @@ def train(args, train_dataset, model, tokenizer):
                     # Update teacher model
                     with torch.no_grad():
                         # Collect K steps parameters
-                        student_parameters = [p.clone.detach() for p in model.parameters()]
+                        student_parameters = [p.clone().detach() for p in model.parameters()]
                         parameters.append(student_parameters)
                         sub_parameters = None
                         if len(parameters) > args.kd_K:
