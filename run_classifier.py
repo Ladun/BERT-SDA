@@ -529,11 +529,12 @@ def main():
     if args.do_eval:
         if args.do_train:
             logger.info("Loading checkpoints saved during training for evaluation")
-            checkpoints = [args.output_dir]
+            checkpoints = [os.path.join(args.output_dir, "last")]
             if args.eval_all_checkpoints:
                 checkpoints = list(
                     os.path.dirname(c)
                     for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
+                    if not c.startswith(os.path.join(args.output_dir, "last"))
                 )
                 logging.getLogger("transformers.modeling_utils").setLevel(logging.WARN)  # Reduce model loading logs
         else:
