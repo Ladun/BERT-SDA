@@ -53,6 +53,7 @@ python run_classifier.py --model_type bert \
 | ------------------------- | ------------- |
 | bert-base-uncased (no kd) | 85.647        |
 | bert-base-uncased (K = 1) | 87.092        |
+| bert-base-uncased (K = 3) | 87.052        |
 
 <details>
 <summary>Hyper Parameters </summary>
