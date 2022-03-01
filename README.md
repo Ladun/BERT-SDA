@@ -1,4 +1,16 @@
-# 
+# BERT - SDA
+
+A PyTorch implementation of "[Improving BERT Fine-Tuning via Self-Ensemble and Self-Distillation](https://arxiv.org/abs/2002.10345)"
+
+## Dependencies
+
+- torch == 1.8.3
+- datasets == 1.18.3
+- transformers == 4.7.0
+
+## How to use
+
+Currently, this repository only support snli datasets.
 
 ```
 python run_classifier.py --model_type bert \
@@ -11,24 +23,37 @@ python run_classifier.py --model_type bert \
                          --logging_steps 4000 \
                          --save_steps 4000 \
                          --evaluate_during_training \
-                         --do_train
+                         --do_train \
+                         --do_eval
 ```
  
-02/28/2022 05:53:46 - INFO - __main__ -   per_gpu_train_batch_size: 8
-02/28/2022 05:53:46 - INFO - __main__ -   per_gpu_eval_batch_size: 8
-02/28/2022 05:53:46 - INFO - __main__ -   max_seq_length: 128
-02/28/2022 05:53:46 - INFO - __main__ -   learning_rate: 5e-05
-02/28/2022 05:53:46 - INFO - __main__ -   gradient_accumulation_steps: 1
-02/28/2022 05:53:46 - INFO - __main__ -   weight_decay: 0.0
-02/28/2022 05:53:46 - INFO - __main__ -   adam_epsilon: 1e-08
-02/28/2022 05:53:46 - INFO - __main__ -   max_grad_norm: 1.0
-02/28/2022 05:53:46 - INFO - __main__ -   num_train_epochs: 3.0
+## Result
+|                           | Accuracy (%)  |
+| ------------------------- | ------------- |
+| bert-base-uncased (no kd) | 85.647        |
+| bert-base-uncased (K = 1) | 87.092        |
 
-02/28/2022 05:53:46 - INFO - __main__ -   seed: 2022
+<details>
+<summary>Hyper Parameters </summary>
+
+- Default parameters
+    -   per_gpu_train_batch_size: 8
+    -   per_gpu_eval_batch_size: 8
+    -   max_seq_length: 128
+    -   learning_rate: 5e-05
+    -   gradient_accumulation_steps: 1
+    -   weight_decay: 0.0
+    -   adam_epsilon: 1e-08
+    -   max_grad_norm: 1.0
+    -   num_train_epochs: 3.0
+    -   seed: 2022
+- knowledge distillation parameters
+    -   distillation_type: 'average'
+    -   kd_lambda: 1.0
+    -   kd_K:  >= 1
 
 
+</details>
 
-02/28/2022 05:53:46 - INFO - __main__ -   distillation_type: average
-02/28/2022 05:53:46 - INFO - __main__ -   kd_lambda: 1.0
-02/28/2022 05:53:46 - INFO - __main__ -   kd_K: 1
-=> Results: {'acc': 0.870928338762215, 'loss': 0.6886479279894006}
+## Reference
+- [BERT-SDA by lonePatient](https://github.com/lonePatient/BERT-SDA)
